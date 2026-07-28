@@ -20,6 +20,9 @@
     <changeSet id="005-mv-daily-recon-summary" author="trainer">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
+            <not>
+        <tableExists tableName="mv_daily_recon_summary"/>
+    </not>
         </preConditions>
         <sql splitStatements="false"><![CDATA[
             CREATE MATERIALIZED VIEW mv_daily_recon_summary AS
