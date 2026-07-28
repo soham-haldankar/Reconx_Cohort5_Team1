@@ -60,3 +60,45 @@ CREATE TABLE instruments (
     CONSTRAINT UQ_INSTRUMENTS_SYMBOL UNIQUE (symbol),
     CONSTRAINT UQ_INSTRUMENTS_ISIN UNIQUE (isin)
 );
+
+
+
+
+
+INSERT INTO trades (
+    trade_ref, 
+    instrument_id, 
+    asset_class, 
+    side, 
+    quantity, 
+    price, 
+    trade_date, 
+    status, 
+    deleted_at, 
+    modified_at
+) 
+VALUES 
+    (
+        'TRD-2026-001', 
+        1, -- Assuming an instrument with ID 1 exists (e.g., SAP.DE)
+        'EQUITY', 
+        'BUY', 
+        100.00, 
+        145.50, 
+        CURRENT_DATE - INTERVAL '3 days', 
+        'ACTIVE', 
+        NULL, 
+        CURRENT_TIMESTAMP - INTERVAL '2 days'
+    ),
+    (
+        'TRD-2026-002', 
+        2, -- Assuming an instrument with ID 2 exists (e.g., CL_FUT)
+        'COMMODITY', 
+        'SELL', 
+        50.00, 
+        72.30, 
+        CURRENT_DATE - INTERVAL '1 day', 
+        'PENDING', 
+        NULL, 
+        CURRENT_TIMESTAMP
+    );
