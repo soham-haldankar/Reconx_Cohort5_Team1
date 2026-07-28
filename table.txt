@@ -1,0 +1,48 @@
+CREATE Table trades (
+id BIGSERIAL,
+trade_ref VARCHAR(30) NOT NULL,
+instrument_id BIGINT,
+counterparty_id BIGINT,
+asset_class VARCHAR(20) NOT NULL,
+side VARCHAR(4),
+quantity NUMERIC(18,4),
+price NUMERIC(18,4),
+trade_date DATE NOT NULL,
+status VARCHAR (20) DEFAULT 'PENDING',
+deleted_at TIMESTAMPTZ DEFAULT now(),
+modified_at TIMESTAMPTZ,
+PRIMARY KEY (id, trade_date)
+)
+PARTITION BY RANGE (trade_date);
+
+
+CREATE TABLE trades_y2026m04
+PARTITION OF trades
+FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+
+CREATE TABLE trades_y2026m05
+PARTITION OF trades
+FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+
+CREATE TABLE trades_y2026m06
+PARTITION OF trades
+FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
+
+
+CREATE TABLE trades_y2026m07
+PARTITION OF trades
+FOR VALUES FROM ('2026-07-01') TO ('2026-08-01');
+
+
+CREATE TABLE trades_default
+PARTITION OF trades
+DEFAULT;
+
+CREATE INDEX idx_trades_status
+ON trades(status);
+
+CREATE INDEX idx_trades_instrument
+ON trades(instrument_id);
+
+CREATE INDEX idx_trades_counterparty
+ON trades(counterparty_id);
