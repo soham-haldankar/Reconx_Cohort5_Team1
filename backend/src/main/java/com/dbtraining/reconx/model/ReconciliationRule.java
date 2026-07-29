@@ -51,6 +51,5 @@ public enum ReconciliationRule {
         boolean priceOk = priceDiffPct.compareTo(priceTolerancePct) <= 0;
         boolean qtyOk   = qtyDiff.compareTo(qtyToleranceAbs) <= 0;
         return priceOk && qtyOk;
-        throw new UnsupportedOperationException("TICKET-ADV026");
     }
 }
