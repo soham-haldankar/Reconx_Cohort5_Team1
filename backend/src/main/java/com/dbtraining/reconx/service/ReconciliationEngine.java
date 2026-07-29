@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 @Service
 public class ReconciliationEngine {
 
+
     @Timed(value = "reconciliation.duration", description = "Wall time of reconcile()",
            percentiles = {0.5, 0.95, 0.99}, histogram = true)
     public List<ReconResult> reconcile(List<TradeType> internal,
@@ -59,6 +60,38 @@ public class ReconciliationEngine {
             Map<Long, List<TradeType>> internalByCp,
             Map<Long, List<TradeType>> externalByCp,
             ReconciliationRule rule) {
+        if (internalByCp == null || internalByCp.isEmpty()) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
+        Set<Long> counterparties = new HashSet<>(internalByCp.keySet());
+        counterparties.addAll(externalByCp.keySet());
+        List<CompletableFuture<List<ReconResult>>> futures =
+        counterparties.stream()
+                .map(cp ->
+                        CompletableFuture.supplyAsync(
+                                () -> reconcile(
+                                        internalByCp.getOrDefault(cp, List.of()),
+                                        externalByCp.getOrDefault(cp, List.of()),
+                                        rule
+                                )
+                        )
+                ).toList();
+
+        return CompletableFuture
+                .allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v ->
+                        futures.stream()
+                                .flatMap(f -> f.join().stream())
+                                .toList()
+                );
+    }
+
+    private ReconResult matchOne(TradeType internal, TradeType external, ReconciliationRule rule) {
+        // TODO(TICKET-ADV033): if external is null return ReconResult.breakResult(ref, "MISSING_EXTERNAL", ...).
+        //   Otherwise pull priceQty() for both sides, compare via rule.matches(...),
+        //   return ReconResult.matched(ref) or breakResult(ref, "VALUE_MISMATCH", details).
+        throw new UnsupportedOperationException("TICKET-ADV033");
         // TODO(TICKET-ADV037): for each counterparty key in internalByCp launch a
         //   CompletableFuture.supplyAsync(() -> reconcile(...)). Combine via
         //   CompletableFuture.allOf(...).thenApply(v -> futures.stream()
