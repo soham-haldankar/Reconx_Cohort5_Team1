@@ -1,0 +1,7 @@
+docker exec -it reconx-postgres psql -U reconx_user -d reconx
+docker compose up -d postgres
+
+./mvnw spring-boot:run
+
+For ticket 12:
+./mvnw spring-boot:run "-Dspring-boot.run.profiles=uat"
