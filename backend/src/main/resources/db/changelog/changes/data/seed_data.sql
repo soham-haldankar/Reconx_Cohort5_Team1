@@ -54,10 +54,11 @@ SELECT
 FROM generate_series(1, 500) AS n;
 
 -- A handful of breaks against the unmatched/disputed trades
-INSERT INTO recon_breaks (trade_id, discrepancy_type, status)
+INSERT INTO recon_breaks (trade_id, discrepancy_type, status, trade_date)
 SELECT id,
        (ARRAY['PRICE_MISMATCH','QUANTITY_MISMATCH','DATE_MISMATCH'])[1 + (id % 3)],
-       'OPEN'
+       'OPEN',
+       trade_date
 FROM trades
 WHERE status IN ('UNMATCHED','DISPUTED')
 LIMIT 30;
