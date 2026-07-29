@@ -49,8 +49,7 @@ public final class FXTrade implements TradeType {
 
     /** Notional in ccy2 = notionalCcy1 * fxRate. */
     @Override public Money notional() {
-        // TODO(TICKET-ADV020): return new Money(notionalCcy1 * fxRate, ccy2).
-        throw new UnsupportedOperationException("TICKET-ADV020");
+        return new Money(notionalCcy1.multiply(fxRate), ccy2);
     }
 
     public Currency ccy1()           { return ccy1; }
