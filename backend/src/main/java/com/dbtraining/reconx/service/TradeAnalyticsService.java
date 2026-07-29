@@ -22,24 +22,36 @@ public class TradeAnalyticsService {
 
     /** TICKET-ADV034 — count + sum of notional per counterparty. */
     public Map<Long, NotionalSummary> notionalByCounterparty(List<? extends TradeType> trades) {
-        // TODO(TICKET-ADV034): Collectors.groupingBy(this::counterpartyIdOf,
-        //   Collectors.collectingAndThen(toList(), list -> new NotionalSummary(
-        //       list.size(),
-        //       list.stream().map(t -> t.notional().amount()).reduce(ZERO, BigDecimal::add)))).
-        throw new UnsupportedOperationException("TICKET-ADV034");
+        if (trades == null || trades.isEmpty()) return Map.of();
+        return trades.stream().collect(Collectors.groupingBy(
+                this::counterpartyIdOf,
+                Collectors.collectingAndThen(Collectors.toList(), list -> new NotionalSummary(
+                        list.size(),
+                        list.stream()
+                                .map(t -> t.notional().amount())
+                                .reduce(BigDecimal.ZERO, BigDecimal::add)))));
     }
 
     /**
      * TICKET-ADV035 — VWAP = SUM(price * qty) / SUM(qty). Equity-only — only
      * EquityTrade has a meaningful price-volume pair.
      */
-    public Map<String, BigDecimal> vwapByInstrument(List<EquityTrade> equityTrades) {
-        // TODO(TICKET-ADV035): group by EquityTrade::instrumentSymbol, then for
-        //   each bucket compute SUM(price * qty) / SUM(qty) using BigDecimal
-        //   with RoundingMode.HALF_UP. Return BigDecimal.ZERO when totalQty is 0
-        //   (avoid ArithmeticException on division by zero).
-        throw new UnsupportedOperationException("TICKET-ADV035");
-    }
+    Map<String, List<EquityTrade>> bySymbol = equityTrades.stream()
+            .collect(Collectors.groupingBy(EquityTrade::instrumentSymbol));
+
+    return bySymbol.entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey,
+            e -> {
+                BigDecimal totalQty = e.getValue().stream()
+                        .map(EquityTrade::quantity)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                if (totalQty.signum() == 0) return BigDecimal.ZERO;
+                BigDecimal weighted = e.getValue().stream()
+                        .map(t -> t.price().multiply(t.quantity()))
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                return weighted.divide(totalQty, 4, RoundingMode.HALF_UP);
+            }
+    ));
 
     /** TICKET-ADV036 — P&L per instrument symbol (sign by Side). */
     public Map<String, BigDecimal> pnlByInstrument(List<EquityTrade> equityTrades) {
@@ -53,6 +65,9 @@ public class TradeAnalyticsService {
     private BigDecimal pnl(EquityTrade t) {
         BigDecimal abs=t.price().multiply(t.quantity());
         return t.side().equals("SELL")? abs: abs.negate();
+      
+}
+  
     }
 
     private long counterpartyIdOf(TradeType t) {
