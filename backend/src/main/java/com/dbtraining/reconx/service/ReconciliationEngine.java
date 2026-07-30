@@ -83,10 +83,11 @@ public class ReconciliationEngine {
 
     /** TICKET-ADV018 — exhaustive switch over the sealed hierarchy. */
     private BigDecimal[] priceQty(TradeType t) {
-        // TODO(TICKET-ADV018): switch over the sealed TradeType hierarchy
-        //   (EquityTrade, FXTrade, BondTrade, DerivativeTrade) and return a
-        //   BigDecimal[]{price, qty}. The compiler enforces exhaustiveness —
-        //   omit a case and the build fails.
-        throw new UnsupportedOperationException("TICKET-ADV018");
+        return switch (t) {
+            case com.dbtraining.reconx.model.EquityTrade e     -> new BigDecimal[]{e.price(),  e.quantity()};
+            case com.dbtraining.reconx.model.FXTrade fx        -> new BigDecimal[]{fx.fxRate(), fx.notionalCcy1()};
+            case com.dbtraining.reconx.model.BondTrade b       -> new BigDecimal[]{b.couponRate(), b.faceValue()};
+            case com.dbtraining.reconx.model.DerivativeTrade d -> new BigDecimal[]{d.strike(), d.quantity()};
+        };
     }
 }
