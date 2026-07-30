@@ -36,6 +36,7 @@ public class TradeAnalyticsService {
      * TICKET-ADV035 — VWAP = SUM(price * qty) / SUM(qty). Equity-only — only
      * EquityTrade has a meaningful price-volume pair.
      */
+    public Map<String, BigDecimal> vwapByInstrument(List<EquityTrade> equityTrades) {
     Map<String, List<EquityTrade>> bySymbol = equityTrades.stream()
             .collect(Collectors.groupingBy(EquityTrade::instrumentSymbol));
 
@@ -51,7 +52,8 @@ public class TradeAnalyticsService {
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 return weighted.divide(totalQty, 4, RoundingMode.HALF_UP);
             }
-    ));
+        ));
+        }
 
     /** TICKET-ADV036 — P&L per instrument symbol (sign by Side). */
     public Map<String, BigDecimal> pnlByInstrument(List<EquityTrade> equityTrades) {
