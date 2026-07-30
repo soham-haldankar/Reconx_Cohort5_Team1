@@ -1,6 +1,6 @@
 package com.dbtraining.reconx.service;
 
-import com.dbtraining.reconx.domain.Trade;
+import com.dbtraining.reconx.repository.entity.Trade;
 import jakarta.persistence.EntityManager;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
