@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="005-mv-daily-recon-summary" author="soham">
+
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <sql splitStatements="false"><![CDATA[
+
+CREATE MATERIALIZED VIEW mv_daily_recon_summary AS
+
+SELECT
+    t.trade_date,
+    cp.region,
+    i.asset_class,
+
+    COUNT(*) AS total_trades,
+
+    COUNT(*) FILTER (
+        WHERE t.status='MATCHED'
+    ) AS matched_trades,
+
+    COUNT(*) FILTER (
+        WHERE rb.status IN ('UNMATCHED','DISPUTED')
+    ) AS open_breaks,
+
+    ROUND(
+        SUM(t.quantity*t.price)::NUMERIC,
+        2
+    ) AS gross_notional,
+
+    ROUND(
+        (
+            COUNT(*) FILTER (WHERE t.status='MATCHED')::NUMERIC
+            /
+            NULLIF(COUNT(*),0)
+        )*100,
+        2
+    ) AS match_rate_pct
+
+FROM trades t
+
+JOIN counterparties cp
+ON t.counterparty_id=cp.counterparty_id
+
+JOIN instruments i
+ON t.instrument_id=i.instrument_id
+
+LEFT JOIN recon_breaks rb
+ON rb.trade_id=t.trade_id
+
+GROUP BY
+    t.trade_date,
+    cp.region,
+    i.asset_class
+
+WITH NO DATA;
+
+CREATE UNIQUE INDEX uq_mv_daily_recon_summary
+ON mv_daily_recon_summary
+(
+    trade_date,
+    region,
+    asset_class
+);
+
+        ]]></sql>
+
+        <rollback>
+
+            <sql>
+DROP MATERIALIZED VIEW IF EXISTS mv_daily_recon_summary;
+            </sql>
+
+        </rollback>
+
+    </changeSet>
+
+</databaseChangeLog>
