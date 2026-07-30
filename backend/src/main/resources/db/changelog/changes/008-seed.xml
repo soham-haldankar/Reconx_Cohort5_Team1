@@ -108,6 +108,8 @@
     </changeSet>
 
 
+    <!-- ADV017: a handful of recon_breaks against UNMATCHED/DISPUTED trades
+         so the recon engine has real work to reconcile on Day 4+. -->
     <changeSet id="008-seed-recon-breaks" author="trainer" context="dev,test">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
