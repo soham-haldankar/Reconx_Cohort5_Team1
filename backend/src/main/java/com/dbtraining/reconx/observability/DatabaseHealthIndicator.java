@@ -5,12 +5,59 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
+<<<<<<< HEAD
+import java.sql.*;
+import java.time.Duration;
+=======
+>>>>>>> 1d4511b828adce1652a5e61921be5d747ea3e2d0
 
 /**
  * ============================================================================
  * TICKET-ADV059 — DatabaseHealthIndicator (timed SELECT 1)
  *
  * WHAT:    Custom actuator HealthIndicator that runs a fast `SELECT 1` with
+<<<<<<< HEAD
+ *          a 2-second timeout and reports query and elapsedMs as details.
+ * HOW:     Extends AbstractHealthIndicator; Spring picks it up by bean name
+ *          and exposes it under /actuator/health/reconxDatabase.
+ * WHY:     The default DataSource health indicator works, but a custom one
+ *          gives us a controllable timeout AND visible latency for SRE
+ *          dashboards.
+ * OBSERVE: GET /api/actuator/health -> `{"components":{"reconxDatabase":
+ *          {"status":"UP","details":{"query":"SELECT 1","elapsedMs":<n>}}}}`.
+ * ============================================================================
+ */
+@Component("reconxDatabase")
+public class DatabaseHealthIndicator extends AbstractHealthIndicator {
+
+    private static final Duration TIMEOUT = Duration.ofSeconds(2);
+
+    private final DataSource ds;
+
+    public DatabaseHealthIndicator(DataSource ds) {
+        super("ReconX database health check failed");
+        this.ds = ds;
+    }
+
+    @Override
+    protected void doHealthCheck(Health.Builder builder) throws Exception {
+        long start = System.nanoTime();
+        try (Connection conn = ds.getConnection();
+             Statement stmt = conn.createStatement()) {
+            stmt.setQueryTimeout((int) TIMEOUT.toSeconds());
+            try (ResultSet rs = stmt.executeQuery("SELECT 1")) {
+                rs.next();
+            }
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000;
+            builder.up()
+                   .withDetail("query", "SELECT 1")
+                   .withDetail("elapsedMs", elapsedMs);
+        } catch (SQLException e) {
+            builder.down(e).withDetail("query", "SELECT 1");
+        }
+    }
+}
+=======
  *          a 2-second timeout and reports latencyMs as a detail.
  * HOW:     Extends AbstractHealthIndicator; Spring picks it up by bean name
  *          and exposes it under /actuator/health/database.
@@ -46,3 +93,4 @@ public class DatabaseHealthIndicator extends AbstractHealthIndicator {
         builder.up();
     }
 }
+>>>>>>> 1d4511b828adce1652a5e61921be5d747ea3e2d0

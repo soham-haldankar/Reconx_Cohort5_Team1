@@ -20,8 +20,6 @@ spring:
   jpa:
     properties:
       hibernate.dialect: org.hibernate.dialect.H2Dialect
-      hibernate:
-        ddl-auto: validate 
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
@@ -31,4 +29,3 @@ spring:
 logging:
   level:
     com.dbtraining.reconx: DEBUG
-    org.hibernate.SQL: DEBUG

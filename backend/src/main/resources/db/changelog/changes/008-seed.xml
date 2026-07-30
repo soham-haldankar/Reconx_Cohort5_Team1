@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  ============================================================================
- TICKET-ADV017 — Seed data (counterparties, instruments, trades, recon
- breaks, users)
- WHAT:    counterparties, instruments, trades, and recon_breaks are all now
-          seeded from a single file, data/seed_data.sql, run via Liquibase's
-          <sqlFile>. users are still seeded via <insert> (needs real BCrypt
-          hashes, not something a plain SQL script should hardcode inline
-          here either way — kept as-is).
- HOW:     <sqlFile> reads from classpath — path is relative to the
-          changeSet file, same convention the old <loadData> CSVs used.
+ TICKET-ADV017 — Seed data (counterparties, instruments, sample trades, users)
+ WHAT:    Loads CSV files baked into the JAR for counterparties/instruments;
+          generates 500 trades via generate_series spread across four
+          monthly partitions (Apr–Jul 2026); seeds recon_breaks against
+          UNMATCHED/DISPUTED trades; seeds 4 RBAC users.
+ HOW:     <loadData> reads from classpath — paths are relative to the
+          changeSet file. CSV headers must match column names. Trades and
+          recon_breaks use raw <sql> with generate_series for determinism.
  WHY:     The student copy ships an empty DB; the trainer copy ships seeded
           data so demos work the moment the app boots. context="dev,test"
           ensures this never runs against a prod target.
  OBSERVE: SELECT count(*) FROM counterparties → 10. instruments → 50.
-          trades → 500, ~125 per monthly partition. recon_breaks → up to 30.
-          users → 4.
+          trades → 500, ~125 per monthly partition. users → 4.
  ============================================================================
 -->
 <databaseChangeLog
@@ -24,15 +22,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
-
-    <!--
-    NOTE: counterparties, instruments, trades, and recon_breaks are all now
-    seeded together from data/seed_data.sql (see the single
-    008-seed-data changeset below) instead of the CSV loadData / inline SQL
-    changesets below. Left in place, commented out, for reference. DO NOT
-    uncomment these alongside 008-seed-data — seed_data.sql already inserts
-    into these same tables, so running both would double-insert / violate
-    the trade_ref unique constraint.
 
     <changeSet id="008-seed-counterparties" author="trainer" context="dev,test">
         <preConditions onFail="MARK_RAN">
@@ -79,9 +68,12 @@
     <rollback>
         <sql>DELETE FROM instruments;</sql>
     </rollback>
-    </changeSet>
+</changeSet>
 
 
+    <!-- ADV017: the ticket's core requirement — 500 trades deterministically
+         spread across the four monthly partitions (Apr–Jul 2026) so every
+         partition has data for matview refreshes / recon jobs on Day 4+. -->
     <changeSet id="008-seed-trades" author="trainer" context="dev,test">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -127,33 +119,6 @@
         </sql>
         <rollback>
             <sql>DELETE FROM recon_breaks;</sql>
-        </rollback>
-    </changeSet>
-    -->
-
-
-    <!-- ADV017: counterparties, instruments, trades, and recon_breaks all
-         loaded from a single SQL source file (data/seed_data.sql) instead
-         of the CSV loadData / inline SQL above. Keeps the whole seed —
-         10 counterparties, 50 instruments (5 explicit + 45 generated),
-         500 trades spread across four monthly partitions, and ~30 recon
-         breaks — in one deterministic file that can also be run standalone
-         via psql for local debugging. -->
-    <changeSet id="008-seed-data" author="trainer" context="dev,test">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM counterparties
-            </sqlCheck>
-        </preConditions>
-        <sqlFile path="data/seed_data.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="true"
-                 stripComments="true"/>
-        <rollback>
-            <sql>DELETE FROM recon_breaks;</sql>
-            <sql>DELETE FROM trades;</sql>
-            <sql>DELETE FROM instruments;</sql>
-            <sql>DELETE FROM counterparties;</sql>
         </rollback>
     </changeSet>
 

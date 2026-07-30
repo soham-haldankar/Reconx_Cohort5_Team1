@@ -49,7 +49,8 @@ public final class FXTrade implements TradeType {
 
     /** Notional in ccy2 = notionalCcy1 * fxRate. */
     @Override public Money notional() {
-        return new Money(notionalCcy1.multiply(fxRate), ccy2);
+        // TODO(TICKET-ADV020): return new Money(notionalCcy1 * fxRate, ccy2).
+        throw new UnsupportedOperationException("TICKET-ADV020");
     }
 
     public Currency ccy1()           { return ccy1; }
@@ -60,16 +61,17 @@ public final class FXTrade implements TradeType {
     public long counterpartyId()     { return counterpartyId; }
 
     @Override public boolean equals(Object o) {
-        return (o instanceof FXTrade other) && tradeRef.equals(other.tradeRef);
+        // TODO(TICKET-ADV028): pattern-match on FXTrade and compare tradeRef.
+        throw new UnsupportedOperationException("TICKET-ADV028");
     }
     @Override public int hashCode() {
-        return tradeRef.hashCode();
+        // TODO(TICKET-ADV028): hash from tradeRef.
+        throw new UnsupportedOperationException("TICKET-ADV028");
     }
 
     @Override public String toString() {
-        return "FXTrade[ref=%s, %s/%s, notional=%s %s, rate=%s, side=%s]"
-                .formatted(tradeRef, ccy1.getCurrencyCode(), ccy2.getCurrencyCode(),
-                        notionalCcy1.toPlainString(), ccy1.getCurrencyCode(), fxRate.toPlainString(), side);
+        // TODO(TICKET-ADV030): "FXTrade[ref=..., CCY1/CCY2, notional=... CCY1, rate=..., side=...]"
+        throw new UnsupportedOperationException("TICKET-ADV030");
     }
 
     public static final class Builder {
