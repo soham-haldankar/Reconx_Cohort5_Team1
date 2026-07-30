@@ -1,0 +1,11 @@
+target/
+**/.DS_Store
+.DS_Store
+DS_Store
+*.class
+*.jar
+*.log
+.vscode/
+.idea/
+*.swp
+*.swo
