@@ -69,8 +69,6 @@ public class TradeAnalyticsService {
         return t.side().equals("SELL")? abs: abs.negate();
       
 }
-  
-    }
 
     private long counterpartyIdOf(TradeType t) {
         // TODO(TICKET-ADV018): exhaustive switch over the sealed TradeType
