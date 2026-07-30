@@ -93,17 +93,6 @@ public class ReconciliationEngine {
                 );
     }
 
-    private ReconResult matchOne(TradeType internal, TradeType external, ReconciliationRule rule) {
-        // TODO(TICKET-ADV033): if external is null return ReconResult.breakResult(ref, "MISSING_EXTERNAL", ...).
-        //   Otherwise pull priceQty() for both sides, compare via rule.matches(...),
-        //   return ReconResult.matched(ref) or breakResult(ref, "VALUE_MISMATCH", details).
-        throw new UnsupportedOperationException("TICKET-ADV033");
-        // TODO(TICKET-ADV037): for each counterparty key in internalByCp launch a
-        //   CompletableFuture.supplyAsync(() -> reconcile(...)). Combine via
-        //   CompletableFuture.allOf(...).thenApply(v -> futures.stream()
-        //       .flatMap(f -> f.join().stream()).toList()).
-        throw new UnsupportedOperationException("TICKET-ADV037");
-    }
 
     private ReconResult matchOne(TradeType internal, TradeType external, ReconciliationRule rule) {
         String ref = internal.tradeRef().value();
