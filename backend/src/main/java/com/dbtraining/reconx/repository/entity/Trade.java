@@ -108,4 +108,13 @@ public class Trade {
     public void setPrice(BigDecimal v)        { this.price = v; }
     public void setTradeDate(LocalDate v)     { this.tradeDate = v; }
     public void setStatus(String v)           { this.status = v; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trade other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override public int hashCode() { return Objects.hash(id); }
 }

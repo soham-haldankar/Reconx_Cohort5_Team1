@@ -1,6 +1,10 @@
 package com.dbtraining.reconx.service;
 
 import com.dbtraining.reconx.dto.ReconResult;
+import com.dbtraining.reconx.model.BondTrade;
+import com.dbtraining.reconx.model.DerivativeTrade;
+import com.dbtraining.reconx.model.EquityTrade;
+import com.dbtraining.reconx.model.FXTrade;
 import com.dbtraining.reconx.model.ReconciliationRule;
 import com.dbtraining.reconx.model.TradeType;
 import io.micrometer.core.annotation.Timed;
@@ -9,6 +13,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,18 +44,16 @@ public class ReconciliationEngine {
            percentiles = {0.5, 0.95, 0.99}, histogram = true)
     public List<ReconResult> reconcile(List<TradeType> internal,
                                        List<TradeType> external,
-                                       ReconciliationRule rule) {
-        // TODO(TICKET-ADV033): build a Map<tradeRef, TradeType> from `external`
-        //   (O(1) lookups beat O(n*m) nested iteration), then parallelStream
-        //   over `internal` and call matchOne(in, externalByRef.get(...), rule)
-        //   for each. Guard against null/empty inputs (TICKET-ADV047).
-        //   HINT:
-        //     Map<String, TradeType> externalByRef = external.stream()
-        //         .collect(Collectors.toMap(t -> t.tradeRef().value(), Function.identity(), (a, b) -> a));
-        //     return internal.parallelStream()
-        //         .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
-        //         .toList();
-        throw new UnsupportedOperationException("TICKET-ADV033");
+                                       ReconciliationRule rule){
+        if (internal == null || internal.isEmpty()) return List.of();
+
+        Map<String, TradeType> externalByRef = (external == null ? List.<TradeType>of() : external)
+                .stream()
+                .collect(Collectors.toMap(t -> t.tradeRef().value(), Function.identity(), (a, b) -> a));
+
+        return internal.parallelStream()
+                .map(in -> matchOne(in, externalByRef.get(in.tradeRef().value()), rule))
+                .toList();
     }
 
     /**
@@ -61,18 +65,47 @@ public class ReconciliationEngine {
             Map<Long, List<TradeType>> internalByCp,
             Map<Long, List<TradeType>> externalByCp,
             ReconciliationRule rule) {
-        // TODO(TICKET-ADV037): for each counterparty key in internalByCp launch a
-        //   CompletableFuture.supplyAsync(() -> reconcile(...)). Combine via
-        //   CompletableFuture.allOf(...).thenApply(v -> futures.stream()
-        //       .flatMap(f -> f.join().stream()).toList()).
-        throw new UnsupportedOperationException("TICKET-ADV037");
+        if (internalByCp == null || internalByCp.isEmpty()) {
+            return CompletableFuture.completedFuture(List.of());
+        }
+
+        Set<Long> counterparties = new HashSet<>(internalByCp.keySet());
+        counterparties.addAll(externalByCp.keySet());
+        List<CompletableFuture<List<ReconResult>>> futures =
+        counterparties.stream()
+                .map(cp ->
+                        CompletableFuture.supplyAsync(
+                                () -> reconcile(
+                                        internalByCp.getOrDefault(cp, List.of()),
+                                        externalByCp.getOrDefault(cp, List.of()),
+                                        rule
+                                )
+                        )
+                ).toList();
+
+        return CompletableFuture
+                .allOf(futures.toArray(new CompletableFuture[0]))
+                .thenApply(v ->
+                        futures.stream()
+                                .flatMap(f -> f.join().stream())
+                                .toList()
+                );
     }
 
+
     private ReconResult matchOne(TradeType internal, TradeType external, ReconciliationRule rule) {
-        // TODO(TICKET-ADV033): if external is null return ReconResult.breakResult(ref, "MISSING_EXTERNAL", ...).
-        //   Otherwise pull priceQty() for both sides, compare via rule.matches(...),
-        //   return ReconResult.matched(ref) or breakResult(ref, "VALUE_MISMATCH", details).
-        throw new UnsupportedOperationException("TICKET-ADV033");
+        String ref = internal.tradeRef().value();
+        if (external == null) {
+            return ReconResult.breakResult(ref, "MISSING_EXTERNAL",
+                    "No external trade found for " + ref);
+        }
+        BigDecimal[] iPair = priceQty(internal);
+        BigDecimal[] ePair = priceQty(external);
+        if (rule.matches(iPair[0], iPair[1], ePair[0], ePair[1])) {
+            return ReconResult.matched(ref);
+        }
+        return ReconResult.breakResult(ref, "VALUE_MISMATCH",
+                "internal=%s/%s external=%s/%s".formatted(iPair[0], iPair[1], ePair[0], ePair[1]));
     }
 
     /** TICKET-ADV018 — exhaustive switch over the sealed hierarchy. */
