@@ -28,11 +28,31 @@ class ReconciliationEngineTest {
         assertThat(results.get(0).status()).isEqualTo(ReconResult.Status.MATCHED);
         assertThat(results.get(0).tradeRef()).isEqualTo("EQU-20260603-0001");
     }
+    }
 
-    @Test
-    void testReconcile_priceTolerance_withinThreshold() {
+
+    @ParameterizedTest(name="price diff {0} stays within 1% tolerance -> MATCHED")
+    @ValueSource(strings = {"0.10", "0.50", "0.99"})
+    void testReconcile_priceTolerance_withinThreshold(String diff) {
         // TODO(TICKET-ADV041): prices 100.00 vs 100.50 + PRICE_TOLERANCE_1PCT rule -> status MATCHED.
-        org.junit.jupiter.api.Assertions.fail("TICKET-ADV041 not implemented yet");
+        BigDecimal priceDifference = new BigDecimal(diff);
+        BigDecimal internalPrice=new BigDecimal("100.00");
+        BigDecimal externalPrice=internalPrice.add(priceDifference);
+        List<TradeType> internalTrade = List.<TradeType>of(equity("EQU-20260603-0002", internalPrice.toString(), "10"));
+        List<TradeType> externalTrade =List.<TradeType>of(equity("EQU-20260603-0002", externalPrice.toString(), "10"));
+        ReconciliationRule rule = ReconciliationRule.PRICE_TOLERANCE_1PCT;
+
+
+        // Act
+        List<ReconResult> results = reconciliationEngine.reconcile(
+                internalTrade,
+               externalTrade,
+                rule
+        );
+
+        // Assert
+        assertEquals(1, results.size());
+        assertEquals(ReconStatus.MATCHED, results.get(0).status());
     }
 
     @Test
