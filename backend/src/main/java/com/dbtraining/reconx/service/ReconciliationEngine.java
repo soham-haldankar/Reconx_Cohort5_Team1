@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 @Service
 public class ReconciliationEngine {
 
-
     @Timed(value = "reconciliation.duration", description = "Wall time of reconcile()",
            percentiles = {0.5, 0.95, 0.99}, histogram = true)
     public List<ReconResult> reconcile(List<TradeType> internal,

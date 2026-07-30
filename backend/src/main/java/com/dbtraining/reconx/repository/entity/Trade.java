@@ -66,9 +66,8 @@ public class Trade {
     @Column(name = "trade_date", nullable = false)
     private LocalDate tradeDate;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private TradeStatus status = TradeStatus.PENDING;
+    private String status = "PENDING";
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
