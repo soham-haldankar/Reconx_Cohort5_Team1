@@ -66,8 +66,9 @@ public class Trade {
     @Column(name = "trade_date", nullable = false)
     private LocalDate tradeDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private String status = "PENDING";
+    private TradeStatus status = TradeStatus.PENDING;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
@@ -108,4 +109,13 @@ public class Trade {
     public void setPrice(BigDecimal v)        { this.price = v; }
     public void setTradeDate(LocalDate v)     { this.tradeDate = v; }
     public void setStatus(String v)           { this.status = v; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Trade other)) return false;
+        return id != null && id.equals(other.id);
+    }
+
+    @Override public int hashCode() { return Objects.hash(id); }
 }
