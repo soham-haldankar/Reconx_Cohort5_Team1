@@ -45,6 +45,17 @@ public class TradeController {
         this.mapper = mapper;
     }
 
+    @Deprecated(since="v1.4.0", forRemoval=true)
+    @GetMapping("/legacy-report")
+    public ResponseEntity<void> legacyTradeReport(){
+        return ResponseEntity.status(HttpStatus.GONE)
+                .header("Deprecation", "true")
+                .header("Sunset", "Wed, 31 Dec 2026 23:59:59 GMT")
+                .header("Link",
+                        "</api/v1/trades>; rel=\"successor-version\"")
+                .build();
+    }
+
     @GetMapping
     @Operation(summary = "List trades — paginated, filterable, sortable")
     public PagedResponse<TradeResponse> list(
