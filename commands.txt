@@ -2,7 +2,11 @@ docker exec -it reconx-postgres psql -U reconx_user -d reconx
 docker compose up -d postgres
 docker compose down -v postgres
 
+docker exec -it reconx-postgres psql -U reconx_user -d reconx -c "\dt revinfo"
+
 ./mvnw spring-boot:run
 
 For ticket 12:
 ./mvnw spring-boot:run "-Dspring-boot.run.profiles=uat"
+
+SPRING_PROFILES_ACTIVE=uat ./mvnw spring-boot:run -Dmaven.test.skip=true
