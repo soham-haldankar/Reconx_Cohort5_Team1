@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
  ============================================================================
- TICKET-ADV017 — Seed data (counterparties, instruments, trades, recon
- breaks, users)
- WHAT:    counterparties, instruments, trades, and recon_breaks are all now
-          seeded from a single file, data/seed_data.sql, run via Liquibase's
-          <sqlFile>. users are still seeded via <insert> (needs real BCrypt
-          hashes, not something a plain SQL script should hardcode inline
-          here either way — kept as-is).
- HOW:     <sqlFile> reads from classpath — path is relative to the
-          changeSet file, same convention the old <loadData> CSVs used.
+ TICKET-ADV017 — Seed data (counterparties, instruments, sample trades, users)
+ WHAT:    Loads CSV files baked into the JAR for counterparties/instruments;
+          generates 500 trades spread across four monthly partitions
+          (Apr–Jul 2026); seeds recon_breaks against UNMATCHED/DISPUTED
+          trades; seeds 4 RBAC users.
+ HOW:     <loadData> reads from classpath — paths are relative to the
+          changeSet file. Generated-row changesets are dbms-gated: Postgres
+          uses generate_series()/random()/ARRAY[]; H2 uses SYSTEM_RANGE()/
+          RAND() with equivalent CASE-based lookups since H2 lacks Postgres
+          array subscripting. context="dev,test" ensures this never runs
+          against a prod target.
  WHY:     The student copy ships an empty DB; the trainer copy ships seeded
-          data so demos work the moment the app boots. context="dev,test"
-          ensures this never runs against a prod target.
+          data so demos work the moment the app boots.
  OBSERVE: SELECT count(*) FROM counterparties → 10. instruments → 50.
-          trades → 500, ~125 per monthly partition. recon_breaks → up to 30.
-          users → 4.
+          trades → 500, ~125 per monthly partition. users → 4.
  ============================================================================
 -->
 <databaseChangeLog
@@ -24,15 +24,6 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                             http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
-
-    <!--
-    NOTE: counterparties, instruments, trades, and recon_breaks are all now
-    seeded together from data/seed_data.sql (see the single
-    008-seed-data changeset below) instead of the CSV loadData / inline SQL
-    changesets below. Left in place, commented out, for reference. DO NOT
-    uncomment these alongside 008-seed-data — seed_data.sql already inserts
-    into these same tables, so running both would double-insert / violate
-    the trade_ref unique constraint.
 
     <changeSet id="008-seed-counterparties" author="trainer" context="dev,test">
         <preConditions onFail="MARK_RAN">
@@ -53,37 +44,88 @@
     </changeSet>
 
 
-    <changeSet id="008-seed-instruments" author="trainer" context="dev,test">
-    <preConditions onFail="MARK_RAN">
-        <sqlCheck expectedResult="0">
-            SELECT COUNT(*) FROM instruments
-        </sqlCheck>
-    </preConditions>
-    <sql splitStatements="false">
-        INSERT INTO instruments (symbol, name, asset_class, currency, isin) VALUES
-          ('SAP.DE', 'SAP SE',                'EQUITY',       'EUR', 'DE0007164600'),
-          ('US10Y',  'US 10-Year Treasury',   'FIXED_INCOME', 'USD', 'US912828F622'),
-          ('EURUSD', 'Euro / US Dollar',      'FX',           'USD', NULL),
-          ('XAU',    'Spot Gold',             'COMMODITY',    'USD', NULL),
-          ('CL_FUT', 'WTI Crude Oil Futures', 'DERIVATIVE',   'USD', NULL);
+    <changeSet id="008-seed-instruments-fixed" author="trainer" context="dev,test">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM instruments
+            </sqlCheck>
+        </preConditions>
+        <sql splitStatements="false">
+            INSERT INTO instruments (symbol, name, asset_class, currency, isin) VALUES
+              ('SAP.DE', 'SAP SE',                'EQUITY',       'EUR', 'DE0007164600'),
+              ('US10Y',  'US 10-Year Treasury',   'FIXED_INCOME', 'USD', 'US912828F622'),
+              ('EURUSD', 'Euro / US Dollar',      'FX',           'USD', NULL),
+              ('XAU',    'Spot Gold',             'COMMODITY',    'USD', NULL),
+              ('CL_FUT', 'WTI Crude Oil Futures', 'DERIVATIVE',   'USD', NULL);
+        </sql>
+        <rollback>
+            <sql>DELETE FROM instruments;</sql>
+        </rollback>
+    </changeSet>
 
-        INSERT INTO instruments (symbol, name, asset_class, currency, isin)
-        SELECT
-            'GEN' || LPAD(g::TEXT, 4, '0'),
-            'Generated Instrument ' || g,
-            (ARRAY['EQUITY','FIXED_INCOME','FX','COMMODITY','DERIVATIVE'])[1 + (g % 5)],
-            (ARRAY['USD','EUR','GBP','JPY','CHF'])[1 + (g % 5)],
-            NULL
-        FROM generate_series(1, 45) AS g;
-    </sql>
-    <rollback>
-        <sql>DELETE FROM instruments;</sql>
-    </rollback>
+    <changeSet id="008-seed-instruments-generated-postgres" author="trainer" context="dev,test">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+            <sqlCheck expectedResult="5">
+                SELECT COUNT(*) FROM instruments
+            </sqlCheck>
+        </preConditions>
+        <sql splitStatements="false">
+            INSERT INTO instruments (symbol, name, asset_class, currency, isin)
+            SELECT
+                'GEN' || LPAD(g::TEXT, 4, '0'),
+                'Generated Instrument ' || g,
+                (ARRAY['EQUITY','FIXED_INCOME','FX','COMMODITY','DERIVATIVE'])[1 + (g % 5)],
+                (ARRAY['USD','EUR','GBP','JPY','CHF'])[1 + (g % 5)],
+                NULL
+            FROM generate_series(1, 45) AS g;
+        </sql>
+        <rollback>
+            <sql>DELETE FROM instruments WHERE symbol LIKE 'GEN%';</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="008-seed-instruments-generated-h2" author="trainer" context="dev,test">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="h2"/>
+            <sqlCheck expectedResult="5">
+                SELECT COUNT(*) FROM instruments
+            </sqlCheck>
+        </preConditions>
+        <sql splitStatements="false">
+            INSERT INTO instruments (symbol, name, asset_class, currency, isin)
+            SELECT
+                'GEN' || LPAD(CAST(x AS VARCHAR), 4, '0'),
+                'Generated Instrument ' || x,
+                CASE MOD(x, 5)
+                    WHEN 0 THEN 'EQUITY'
+                    WHEN 1 THEN 'FIXED_INCOME'
+                    WHEN 2 THEN 'FX'
+                    WHEN 3 THEN 'COMMODITY'
+                    ELSE 'DERIVATIVE'
+                END,
+                CASE MOD(x, 5)
+                    WHEN 0 THEN 'USD'
+                    WHEN 1 THEN 'EUR'
+                    WHEN 2 THEN 'GBP'
+                    WHEN 3 THEN 'JPY'
+                    ELSE 'CHF'
+                END,
+                NULL
+            FROM SYSTEM_RANGE(1, 45);
+        </sql>
+        <rollback>
+            <sql>DELETE FROM instruments WHERE symbol LIKE 'GEN%';</sql>
+        </rollback>
     </changeSet>
 
 
-    <changeSet id="008-seed-trades" author="trainer" context="dev,test">
+    <!-- ADV017: the ticket's core requirement — 500 trades deterministically
+         spread across the four monthly partitions (Apr–Jul 2026) so every
+         partition has data for matview refreshes / recon jobs on Day 4+. -->
+    <changeSet id="008-seed-trades-postgres" author="trainer" context="dev,test">
         <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
             <sqlCheck expectedResult="0">
                 SELECT COUNT(*) FROM trades
             </sqlCheck>
@@ -107,7 +149,53 @@
         </rollback>
     </changeSet>
 
+    <changeSet id="008-seed-trades-h2" author="trainer" context="dev,test">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="h2"/>
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM trades
+            </sqlCheck>
+        </preConditions>
+        <sql splitStatements="false">
+            INSERT INTO trades (trade_ref, instrument_id, counterparty_id, asset_class, side, quantity, price, trade_date, status)
+            SELECT
+                'TRD-2026-' || LPAD(CAST(x AS VARCHAR), 6, '0')          AS trade_ref,
+                1 + MOD(x, 50)                                            AS instrument_id,
+                1 + MOD(x, 10)                                            AS counterparty_id,
+                CASE MOD(x, 5)
+                    WHEN 0 THEN 'EQUITY'
+                    WHEN 1 THEN 'FIXED_INCOME'
+                    WHEN 2 THEN 'FX'
+                    WHEN 3 THEN 'COMMODITY'
+                    ELSE 'DERIVATIVE'
+                END                                                       AS asset_class,
+                CASE MOD(x, 2) WHEN 0 THEN 'BUY' ELSE 'SELL' END          AS side,
+                ROUND(RAND() * 10000 + 1, 4)                              AS quantity,
+                ROUND(RAND() * 500 + 1, 4)                                AS price,
+                DATEADD('DAY', MOD(x, 120), DATE '2026-04-01')            AS trade_date,
+                CASE MOD(x, 6)
+                    WHEN 0 THEN 'PENDING'
+                    WHEN 1 THEN 'MATCHED'
+                    WHEN 2 THEN 'UNMATCHED'
+                    WHEN 3 THEN 'DISPUTED'
+                    WHEN 4 THEN 'MATCHED'
+                    ELSE 'MATCHED'
+                END                                                       AS status
+            FROM SYSTEM_RANGE(1, 500);
+        </sql>
+        <rollback>
+            <sql>DELETE FROM trades;</sql>
+        </rollback>
+    </changeSet>
 
+
+    <!-- ADV017: a handful of recon_breaks against UNMATCHED/DISPUTED trades
+         so the recon engine has real work to reconcile on Day 4+.
+         Portable across both dialects — no arrays or generate_series needed
+         here, just plain CASE/MOD, so a single changeset covers both.
+         trade_date is now required: recon_breaks FKs against the composite
+         (id, trade_date) key on trades (see 002-schema.xml /
+         006-audit-and-recon.xml), so it must be carried over here too. -->
     <changeSet id="008-seed-recon-breaks" author="trainer" context="dev,test">
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
@@ -115,9 +203,14 @@
             </sqlCheck>
         </preConditions>
         <sql splitStatements="false">
-            INSERT INTO recon_breaks (trade_id, discrepancy_type, status)
+            INSERT INTO recon_breaks (trade_id, trade_date, discrepancy_type, status)
             SELECT id,
-                   (ARRAY['PRICE_MISMATCH','QUANTITY_MISMATCH','DATE_MISMATCH'])[1 + (id % 3)],
+                   trade_date,
+                   CASE MOD(id, 3)
+                       WHEN 0 THEN 'PRICE_MISMATCH'
+                       WHEN 1 THEN 'QUANTITY_MISMATCH'
+                       ELSE 'DATE_MISMATCH'
+                   END,
                    'OPEN'
             FROM trades
             WHERE status IN ('UNMATCHED','DISPUTED')
@@ -125,33 +218,6 @@
         </sql>
         <rollback>
             <sql>DELETE FROM recon_breaks;</sql>
-        </rollback>
-    </changeSet>
-    -->
-
-
-    <!-- ADV017: counterparties, instruments, trades, and recon_breaks all
-         loaded from a single SQL source file (data/seed_data.sql) instead
-         of the CSV loadData / inline SQL above. Keeps the whole seed —
-         10 counterparties, 50 instruments (5 explicit + 45 generated),
-         500 trades spread across four monthly partitions, and ~30 recon
-         breaks — in one deterministic file that can also be run standalone
-         via psql for local debugging. -->
-    <changeSet id="008-seed-data" author="trainer" context="dev,test">
-        <preConditions onFail="MARK_RAN">
-            <sqlCheck expectedResult="0">
-                SELECT COUNT(*) FROM counterparties
-            </sqlCheck>
-        </preConditions>
-        <sqlFile path="data/seed_data.sql"
-                 relativeToChangelogFile="true"
-                 splitStatements="true"
-                 stripComments="true"/>
-        <rollback>
-            <sql>DELETE FROM recon_breaks;</sql>
-            <sql>DELETE FROM trades;</sql>
-            <sql>DELETE FROM instruments;</sql>
-            <sql>DELETE FROM counterparties;</sql>
         </rollback>
     </changeSet>
 

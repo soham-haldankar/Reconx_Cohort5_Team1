@@ -1,3 +1,8 @@
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\dto\PagedResponseTest.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\model\DerivativeTradeTest.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\model\EquityTradeTest.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\model\ReconciliationRuleTest.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\observability\DatabaseHealthIndicatorTest.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\repository\entity\InstrumentTest.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\repository\TradeRepositoryTest.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\test\java\com\dbtraining\reconx\service\ReconciliationEngineTest.java

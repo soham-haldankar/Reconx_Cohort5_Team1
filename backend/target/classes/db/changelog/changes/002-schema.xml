@@ -106,6 +106,26 @@
         </rollback>
     </changeSet>
 
+    <!-- ADV007 prerequisite — composite unique constraint so recon_breaks (006)
+         can FK against (id, trade_date). Required regardless of dbms: Postgres
+         needs trade_date in a unique/PK constraint to later partition trades
+         by that column (see 004); H2 needs it simply because the FK in 006
+         references both columns. id alone remains the PK/unique identifier;
+         this adds a second, composite uniqueness guarantee alongside it. -->
+    <changeSet id="002-trades-composite-unique-id-trade-date" author="trainer">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="trades" indexName="uq_trades_id_trade_date"/>
+            </not>
+        </preConditions>
+        <addUniqueConstraint tableName="trades"
+                              columnNames="id, trade_date"
+                              constraintName="uq_trades_id_trade_date"/>
+        <rollback>
+            <dropUniqueConstraint tableName="trades" constraintName="uq_trades_id_trade_date"/>
+        </rollback>
+    </changeSet>
+
     <!-- ADV006 — settlements -->
     <changeSet id="002-create-settlements" author="trainer">
     <preConditions onFail="MARK_RAN">

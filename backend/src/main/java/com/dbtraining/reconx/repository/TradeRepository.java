@@ -27,10 +27,12 @@ public interface TradeRepository
         SELECT t FROM Trade t
         WHERE t.tradeDate BETWEEN :from AND :to
           AND (:status IS NULL OR t.status = :status)
+          AND (:assetClass IS NULL OR t.assetClass = :assetClass)
         """)
     Page<Trade> findByFilters(@Param("from") LocalDate from,
                               @Param("to") LocalDate to,
                               @Param("status") String status,
+                              @Param("assetClass") String assetClass,
                               Pageable pageable);
 
     long countByStatus(String status);

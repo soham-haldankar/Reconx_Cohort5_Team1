@@ -35,6 +35,8 @@ D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\model
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\model\TradeRef.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\model\TradeType.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\observability\DatabaseHealthIndicator.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\observability\KafkaHealthIndicator.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\observability\MdcFilter.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\observability\TradeMetrics.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\ReconxApplication.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\repository\AppUserRepository.java
@@ -55,5 +57,8 @@ D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\secur
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\security\SecurityConfig.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\InstrumentService.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\ReconciliationEngine.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\ReconSummary.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\ReconSummaryCollector.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\TradeAnalyticsService.java
+D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\TradeHistoryService.java
 D:\Reconx\Reconx_Cohort5_Team1\backend\src\main\java\com\dbtraining\reconx\service\TradeService.java

@@ -2,14 +2,17 @@
 <!--
  ============================================================================
  TICKET-ADV009 — JSONB column on instruments (+ GIN index on Postgres)
- WHAT:    instruments.metadata as JSONB to hold per-asset-class detail
+ WHAT:    instruments.metadata to hold per-asset-class detail
           (e.g. dividend yield, country, sector).
- HOW:     Postgres-only step; H2 dialect lacks JSONB. The precondition guards
-          dialect so dev (H2) skips the column entirely.
+ HOW:     Postgres gets a native JSONB column + GIN index. H2 (used by
+          @DataJpaTest and dev H2 console work) gets a CLOB column instead,
+          since H2 has no JSONB type — Hypersistence Utils' JsonType
+          handles the (de)serialization transparently on both dialects.
  WHY:     Schemaless metadata avoids 12 columns that only apply to one asset
           class. Trade-off: validation moves to the app layer.
- OBSERVE: \d instruments shows metadata jsonb. EXPLAIN ANALYZE on a metadata
-          ->> 'sector' lookup hits idx_instruments_metadata_gin.
+ OBSERVE: \d instruments shows metadata jsonb on Postgres. On H2, run
+          SELECT column_type FROM information_schema.columns WHERE
+          table_name='INSTRUMENTS' AND column_name='METADATA' — shows CLOB.
  ============================================================================
 -->
 <databaseChangeLog
@@ -22,16 +25,35 @@
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
             <not>
-        <columnExists
-            tableName="instruments"
-            columnName="metadata"/>
-    </not>
+                <columnExists
+                    tableName="instruments"
+                    columnName="metadata"/>
+            </not>
         </preConditions>
         <sql>ALTER TABLE instruments ADD COLUMN metadata JSONB DEFAULT '{}'::JSONB NOT NULL;</sql>
         <sql>CREATE INDEX idx_instruments_metadata_gin ON instruments USING GIN (metadata jsonb_path_ops);</sql>
         <rollback>
             <sql>DROP INDEX IF EXISTS idx_instruments_metadata_gin;</sql>
             <sql>ALTER TABLE instruments DROP COLUMN metadata;</sql>
+        </rollback>
+    </changeSet>
+
+    <changeSet id="003-metadata-on-instruments-h2" author="trainer">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="h2"/>
+            <not>
+                <columnExists
+                    tableName="instruments"
+                    columnName="metadata"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="instruments">
+            <column name="metadata" type="clob" defaultValue="{}">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <rollback>
+            <dropColumn tableName="instruments" columnName="metadata"/>
         </rollback>
     </changeSet>
 

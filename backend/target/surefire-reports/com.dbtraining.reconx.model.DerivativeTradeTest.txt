@@ -1,0 +1,54 @@
+-------------------------------------------------------------------------------
+Test set: com.dbtraining.reconx.model.DerivativeTradeTest
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 2, Errors: 2, Skipped: 0, Time elapsed: 0.108 s <<< FAILURE! -- in com.dbtraining.reconx.model.DerivativeTradeTest
+com.dbtraining.reconx.model.DerivativeTradeTest.builder_expiryBeforeTradeDate_throws -- Time elapsed: 0.082 s <<< FAILURE!
+java.lang.AssertionError: 
+
+Expecting actual throwable to be an instance of:
+  java.lang.IllegalStateException
+but was:
+  java.lang.UnsupportedOperationException: TICKET-ADV022
+	at com.dbtraining.reconx.model.DerivativeTrade$Builder.build(DerivativeTrade.java:107)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.lambda$builder_expiryBeforeTradeDate_throws$0(DerivativeTradeTest.java:49)
+	at org.assertj.core.api.ThrowableAssert.catchThrowable(ThrowableAssert.java:63)
+	...(78 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.builder_expiryBeforeTradeDate_throws(DerivativeTradeTest.java:50)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.dbtraining.reconx.model.DerivativeTradeTest.builder_buildsWhenAllRequiredPresent -- Time elapsed: 0.004 s <<< ERROR!
+java.lang.UnsupportedOperationException: TICKET-ADV022
+	at com.dbtraining.reconx.model.DerivativeTrade$Builder.build(DerivativeTrade.java:107)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.sampleDerivative(DerivativeTradeTest.java:79)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.builder_buildsWhenAllRequiredPresent(DerivativeTradeTest.java:15)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.dbtraining.reconx.model.DerivativeTradeTest.builder_expiryInPastButAfterTradeDate_stillBuilds -- Time elapsed: 0.003 s <<< ERROR!
+java.lang.UnsupportedOperationException: TICKET-ADV022
+	at com.dbtraining.reconx.model.DerivativeTrade$Builder.build(DerivativeTrade.java:107)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.sampleDerivative(DerivativeTradeTest.java:79)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.builder_expiryInPastButAfterTradeDate_stillBuilds(DerivativeTradeTest.java:30)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
+com.dbtraining.reconx.model.DerivativeTradeTest.builder_missingStrike_throws -- Time elapsed: 0.003 s <<< FAILURE!
+java.lang.AssertionError: 
+
+Expecting actual throwable to be an instance of:
+  java.lang.NullPointerException
+but was:
+  java.lang.UnsupportedOperationException: TICKET-ADV022
+	at com.dbtraining.reconx.model.DerivativeTrade$Builder.build(DerivativeTrade.java:107)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.lambda$builder_missingStrike_throws$1(DerivativeTradeTest.java:64)
+	at org.assertj.core.api.ThrowableAssert.catchThrowable(ThrowableAssert.java:63)
+	...(78 remaining lines not displayed - this can be changed with Assertions.setMaxStackTraceElementsDisplayed)
+	at com.dbtraining.reconx.model.DerivativeTradeTest.builder_missingStrike_throws(DerivativeTradeTest.java:65)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1596)
+
