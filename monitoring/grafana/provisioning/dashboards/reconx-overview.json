@@ -58,6 +58,40 @@
         "x": 0,
         "y": 16
       }
+    },
+    {
+      "type": "piechart",
+      "title": "Trades by Status (ADV092)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "reconx-prometheus"
+      },
+      "targets": [
+        {
+          "expr": "sum by (status) (trades_by_status)",
+          "legendFormat": "{{status}}"
+        }
+      ],
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "right"
+        },
+        "tooltip": {
+          "mode": "single"
+        },
+        "pieType": "pie",
+        "displayLabels": [
+          "name",
+          "value"
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 24
+      }
     }
   ],
   "refresh": "10s",
