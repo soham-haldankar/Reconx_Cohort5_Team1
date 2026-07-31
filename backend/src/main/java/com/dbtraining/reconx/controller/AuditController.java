@@ -26,11 +26,8 @@ public class AuditController {
 
     @GetMapping("/trades/{tradeRef}")
     @Operation(summary = "Get audit history for a trade (by tradeRef)")
-    public List<AuditLogEntry> history(@PathVariable String tradeRef) {
-        // TODO(TICKET-ADV071): return auditRepo.findByTradeRefOrderByEventTimestampAsc(tradeRef).
-        //   Day-0 returns an empty list so the React audit-trail panel renders
-        //   "no history yet" instead of erroring.
-        return Collections.emptyList();
+    public List<AuditLogEntry> history(@PathVariable String tradeRef)  {
+        return auditRepo.findByTradeRefOrderByEventTimestampAsc(tradeRef);
     }
 
     @GetMapping("/trades/{tradeRef}/events")
