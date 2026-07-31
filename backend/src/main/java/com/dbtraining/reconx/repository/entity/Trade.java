@@ -49,6 +49,7 @@ public class Trade {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "instrument_id")
+    @Audited(targetAuditMode = RelationTargetAuditMode.NOT_AUDITED)
     private Instrument instrument;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
