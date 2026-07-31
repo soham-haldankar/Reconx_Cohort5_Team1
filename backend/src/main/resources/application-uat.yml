@@ -12,6 +12,8 @@ spring:
       connection-timeout: 5000
   jpa:
     properties:
+      hibernate:
+        ddl-auto: update
       hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
       hibernate.jdbc.batch_size: 50
 

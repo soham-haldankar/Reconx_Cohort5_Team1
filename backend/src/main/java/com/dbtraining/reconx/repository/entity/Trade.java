@@ -31,6 +31,7 @@ import java.util.Objects;
  * ============================================================================
  */
 @Entity
+@Audited
 @Table(name = "trades")
 @EntityListeners(AuditingEntityListener.class)
 // @org.hibernate.envers.Audited                  // re-enable when envers tables are migrated
