@@ -45,6 +45,17 @@ public class TradeController {
         this.mapper = mapper;
     }
 
+    @Deprecated(since="v1.4.0", forRemoval=true)
+    @GetMapping("/legacy-report")
+    public ResponseEntity<void> legacyTradeReport(){
+        return ResponseEntity.status(HttpStatus.GONE)
+                .header("Deprecation", "true")
+                .header("Sunset", "Wed, 31 Dec 2026 23:59:59 GMT")
+                .header("Link",
+                        "</api/v1/trades>; rel=\"successor-version\"")
+                .build();
+    }
+
     @GetMapping
     @Operation(summary = "List trades — paginated, filterable, sortable")
     public PagedResponse<TradeResponse> list(
@@ -87,5 +98,15 @@ public class TradeController {
                                        @AuthenticationPrincipal String actor) {
         service.softDelete(id, actor);
         return ResponseEntity.noContent().build();
+    }
+
+    @Test
+    @WithMockUser(roles = "VIEWER")
+    void testCreateTrade_viewerRole_returns403() throws Exception {
+        mockMvc.perform(post("/api/v1/trades")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(validRequest()))
+                        .with(org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf()))
+                .andExpect(status().isForbidden());
     }
 }

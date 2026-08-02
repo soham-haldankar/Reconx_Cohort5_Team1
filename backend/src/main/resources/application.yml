@@ -11,6 +11,8 @@
 #          Liquibase runs, sample users are seeded.
 # =============================================================================
 spring:
+  jmx:
+    enabled: true
   application:
     name: reconx
   profiles:
@@ -31,10 +33,13 @@ spring:
       hibernate.jdbc.time_zone: UTC
 
   # ADV081-ADV082 — Caffeine cache config; per-cache spec overrides the global one.
-  cache:
-    cache-names: instruments,counterparties
-    caffeine:
-      spec: maximumSize=500,expireAfterWrite=5m
+ 
+  spring:
+    # TICKET-ADV081-TICKET-ADV082 — Caffeine cache config; per-cache spec overrides the global one.
+    cache:
+      cache-names: instruments,counterparties
+      caffeine:
+        spec: maximumSize=500,expireAfterWrite=5m
 
   # ADV128 — Kafka producer/consumer defaults. Topics are created at startup
   # by KafkaTopicsConfig (see com.dbtraining.reconx.kafka.KafkaTopicsConfig).
