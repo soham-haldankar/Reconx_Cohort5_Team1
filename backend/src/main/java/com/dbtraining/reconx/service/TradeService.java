@@ -44,10 +44,10 @@ public class TradeService {
     private final TradeMetrics metrics;
 
     public TradeService(TradeRepository tradeRepo,
-                        CounterpartyRepository cpRepo,
-                        InstrumentRepository instRepo,
-                        TradeEventProducer events,
-                        TradeMetrics metrics) {
+                         CounterpartyRepository cpRepo,
+                         InstrumentRepository instRepo,
+                         TradeEventProducer events,
+                         TradeMetrics metrics) {
         this.tradeRepo = tradeRepo;
         this.cpRepo = cpRepo;
         this.instRepo = instRepo;
@@ -56,15 +56,44 @@ public class TradeService {
     }
 
     public Trade create(TradeRequest req, String actor) {
-        // TODO(TICKET-ADV064): reject duplicate tradeRef via DuplicateTradeRefException,
-        //   build a new Trade with instrument + counterparty looked up from
-        //   their repos (throw TradeNotFoundException on miss), status = "PENDING",
-        //   save, then:
-        //     - metrics.incrementTradeCreated() + metrics.recordTradeValue(qty*price) — TICKET-ADV083
-        //     - events.publish(new TradeEvent(... TRADE_CREATED ... actor ...)) — TICKET-ADV129
+        // TICKET-ADV064
+        if (tradeRepo.findByTradeRef(req.tradeRef()).isPresent()) {
+            throw new DuplicateTradeRefException(req.tradeRef());
+        }
+
+        Trade t = new Trade();
+        t.setTradeRef(req.tradeRef());
+        t.setTradeDate(req.tradeDate());
+        t.setQuantity(req.quantity());
+        t.setPrice(req.price());
+        t.setStatus("PENDING");
+
+        t.setInstrument(instRepo.findById(req.instrumentId())
+                .orElseThrow(() -> new TradeNotFoundException(
+                        "Instrument not found: " + req.instrumentId())));
+
+        t.setCounterparty(cpRepo.findById(req.counterpartyId())
+                .orElseThrow(() -> new TradeNotFoundException(
+                        "Counterparty not found: " + req.counterpartyId())));
+
         Trade saved = tradeRepo.save(t);
+
+        // TICKET-ADV083
         metrics.incrementTradeCreated();
         metrics.recordTradeValue(saved.getQuantity().multiply(saved.getPrice()).doubleValue());
+
+        // TICKET-ADV129
+        events.publish(new TradeEvent(
+                UUID.randomUUID(),
+                saved.getTradeRef(),
+                TradeEvent.EventType.TRADE_CREATED,
+                Instant.now(),
+                actor,
+                null,
+                saved.getStatus()
+        ));
+
+        return saved;
     }
 
     public Trade update(Long id, TradeRequest req, String actor) {
@@ -94,3 +123,5 @@ public class TradeService {
         return tradeRepo.findAll(spec, pageable);
     }
 }
+
+

@@ -22,9 +22,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-
 @WebMvcTest(TradeController.class)
-class TradeControllerWebMvcTest{
+class TradeControllerWebMvcTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -35,7 +34,7 @@ class TradeControllerWebMvcTest{
     @MockBean
     private TradeService tradeService;
 
-    private TradeRequest validRequest(){
+    private TradeRequest validRequest() {
         return new TradeRequest("TRD-20260315-9999",
                 1L,
                 1L,
@@ -47,11 +46,10 @@ class TradeControllerWebMvcTest{
     }
 
     @Test
-    @WithMockUser(roles="TRADER")
-
-    void testCreateTrade_authenticated_returns201() throws Exception{
+    @WithMockUser(roles = "TRADER")
+    void testCreateTrade_authenticated_returns201() throws Exception {
         Instant now = Instant.now();
-        when(tradeService.create(any())).thenReturn(
+        when(tradeService.create(any(), any())).thenReturn(
                 new TradeResponse(
                         42L,
                         "TRD-20260315-9999",
@@ -78,3 +76,5 @@ class TradeControllerWebMvcTest{
                 .andExpect(jsonPath("$.tradeRef").value("TRD-20260315-9999"));
     }
 }
+
+
