@@ -10,3 +10,10 @@ For ticket 12:
 ./mvnw spring-boot:run "-Dspring-boot.run.profiles=uat"
 
 SPRING_PROFILES_ACTIVE=uat ./mvnw spring-boot:run -Dmaven.test.skip=true
+
+
+For ticket 55
+To get the token:
+curl -i -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"viewer@db.com","password":"viewer123"}'
