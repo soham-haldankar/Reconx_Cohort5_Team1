@@ -124,6 +124,7 @@
         </dependency>
 
         <!-- Caching (ADV081-ADV082) -->
+        <!-- Caching (TICKET-ADV081-TICKET-ADV082) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
