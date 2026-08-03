@@ -1,5 +1,12 @@
+package com.dbtraining.reconx.exception;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import jakarta.validation.ConstraintViolationException;
 
 import java.net.URI;
 import java.time.Instant;
@@ -7,9 +14,20 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
+/**
  * ============================================================================
  * TICKET-ADV062 — RFC 7807 ProblemDetail for every ReconException
+ * ============================================================================
+ * WHAT:    Central @RestControllerAdvice mapping domain + validation
+ *          exceptions to RFC 7807 ProblemDetail responses.
+ * HOW:     One @ExceptionHandler per exception type, most specific first,
+ *          with a catch-all Exception handler last as a safety net.
+ * WHY:     Consistent, machine-parseable error bodies for every endpoint,
+ *          instead of raw stack traces or ad-hoc JSON shapes.
+ * ============================================================================
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -30,28 +48,26 @@ public class GlobalExceptionHandler {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         pd.setType(URI.create("https://reconx.dbtraining.com/errors/duplicate-trade-ref"));
         pd.setTitle("Duplicate trade reference");
+        pd.setProperty("timestamp", Instant.now());
         return pd;
     }
 
     @ExceptionHandler(InvalidTradeException.class)
     public ProblemDetail invalid(InvalidTradeException ex) {
-    ProblemDetail pd = ProblemDetail.forStatusAndDetail(
-            HttpStatus.BAD_REQUEST,
-            ex.getMessage());
-
-    pd.setTitle("Invalid trade");
-    return pd;
-}
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        pd.setTitle("Invalid trade");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
 
     @ExceptionHandler(ReconciliationMismatchException.class)
     public ProblemDetail mismatch(ReconciliationMismatchException ex) {
-    ProblemDetail pd = ProblemDetail.forStatusAndDetail(
-            HttpStatus.UNPROCESSABLE_ENTITY,
-            ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage());
+        pd.setTitle("Reconciliation failure");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
+    }
 
-    pd.setTitle("Reconciliation failure");
-    return pd;
-}
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail validation(MethodArgumentNotValidException ex) {
         String msg = ex.getBindingResult().getFieldErrors().stream()
@@ -59,20 +75,27 @@ public class GlobalExceptionHandler {
             .collect(Collectors.joining("; "));
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, msg);
         pd.setTitle("Validation failed");
+        pd.setProperty("timestamp", Instant.now());
         return pd;
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ProblemDetail constraint(ConstraintViolationException ex) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        pd.setTitle("Constraint violation");
+        pd.setProperty("timestamp", Instant.now());
+        return pd;
     }
-    
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleAny(Exception ex) {
-        log.error("Unhandled exception", ex);
+        String correlationId = MDC.get("correlationId");
+        log.error("Unhandled exception [correlationId={}]", correlationId, ex);
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
             "An unexpected error occurred — please contact support with the correlationId");
         pd.setTitle("Internal server error");
+        pd.setProperty("timestamp", Instant.now());
+        pd.setProperty("correlationId", correlationId);
         return pd;
     }
 }
