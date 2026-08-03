@@ -3,9 +3,11 @@ package com.dbtraining.reconx.repository;
 import com.dbtraining.reconx.repository.entity.Trade;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
@@ -16,6 +18,14 @@ import java.util.Optional;
  * TICKET-ADV055 — Custom JPQL filter query
  * TICKET-ADV056 — Specification-based dynamic queries (JpaSpecificationExecutor)
  * TICKET-ADV057 — Pageable / Page<T> for paginated list endpoints
+ *
+ * NOTE: Both findByFilters and the findAll(spec, pageable) override eagerly
+ * fetch instrument + counterparty. Trade.instrument/counterparty are
+ * FetchType.LAZY (see Trade.java), and TradeService.list() is @Transactional
+ * only around the repository call — the Hibernate session is closed by the
+ * time TradeController maps entities to TradeResponse. Without eager
+ * fetching here, accessing counterparty.getName() in the mapper throws
+ * LazyInitializationException: no session.
  * ============================================================================
  */
 public interface TradeRepository
@@ -25,6 +35,8 @@ public interface TradeRepository
 
     @Query("""
         SELECT t FROM Trade t
+        JOIN FETCH t.instrument
+        JOIN FETCH t.counterparty
         WHERE t.tradeDate BETWEEN :from AND :to
         AND (:status IS NULL OR t.status = :status)
         AND (:counterpartyId IS NULL OR t.counterparty.id = :counterpartyId)
@@ -35,5 +47,11 @@ public interface TradeRepository
                               @Param("counterpartyId") Long counterpartyId,
                               Pageable pageable);
 
+    @Override
+    @EntityGraph(attributePaths = {"instrument", "counterparty"})
+    Page<Trade> findAll(Specification<Trade> spec, Pageable pageable);
+
     long countByStatus(String status);
 }
+
+
