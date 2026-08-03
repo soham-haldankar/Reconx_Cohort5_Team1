@@ -14,12 +14,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * TICKET-ADV072 — POST /api/auth/login
+ * POST /api/auth/login
  *
  * Verifies BCrypt password, returns a JWT carrying the user's role.
  */
 @RestController
-@RequestMapping("/v1/auth")
+@RequestMapping("/auth")
 @Tag(name = "auth")
 public class AuthController {
 

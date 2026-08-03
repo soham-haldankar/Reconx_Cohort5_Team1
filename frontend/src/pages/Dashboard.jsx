@@ -1,6 +1,5 @@
-// TICKET-ADV120 — useMemo for portfolio-value calc.
-// TICKET-ADV116 — useTradeStream live feed.
-import React from 'react';
+// useMemo for portfolio-value calc + useTradeStream live feed.
+import React, { useMemo } from 'react';
 import { withAuth } from '@components/withAuth.jsx';
 import { useTradeStream } from '@hooks/useTradeStream.js';
 
@@ -13,16 +12,28 @@ function StatCard({ label, value }) {
   );
 }
 
-function Dashboard() {
-  const { trades, isConnected } = useTradeStream();
+function Dashboard({ trades: tradesProp }) {
+  const stream = useTradeStream();
+  // Prefer explicit prop (used by RTL tests) over the live SSE feed.
+  const trades = tradesProp ?? stream.trades;
+  const isConnected = tradesProp ? true : stream.isConnected;
 
   const portfolioValue = useMemo(
-    () => trades.reduce((sum, t) => sum + (t.quantity * t.price || 0), 0),
+    () => trades.reduce((sum, t) => sum + (Number(t.quantity) * Number(t.price) || 0), 0),
     [trades]
   );
 
-  const matched = trades.filter((t) => t.status === 'MATCHED').length;
-  const breaks  = trades.filter((t) => ['UNMATCHED','DISPUTED'].includes(t.status)).length;
+  const { matched, unmatched, breaks } = useMemo(() => {
+    let m = 0;
+    let u = 0;
+    let b = 0;
+    for (const t of trades) {
+      if (t.status === 'MATCHED') m++;
+      else if (t.status === 'UNMATCHED') { u++; b++; }
+      else if (t.status === 'DISPUTED') b++;
+    }
+    return { matched: m, unmatched: u, breaks: b };
+  }, [trades]);
 
   return (
     <section>
@@ -30,7 +41,8 @@ function Dashboard() {
       <div className="stat-grid">
         <StatCard label="Portfolio value (USD)" value={portfolioValue.toLocaleString()} />
         <StatCard label="Trades streamed" value={trades.length} />
-        <StatCard label="Matched" value={matched} />
+        <StatCard label="Matched trades" value={matched} />
+        <StatCard label="Unmatched trades" value={unmatched} />
         <StatCard label="Open breaks" value={breaks} />
       </div>
       <div role="status" aria-live="polite">
