@@ -22,25 +22,37 @@ function AddTrade() {
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } =
         useForm({ resolver: yupResolver(schema) });
 
-  async function onSubmit(values) {
-    // TODO(TICKET-ADV123): call api.createTrade(values), reset the form on
-    //                     success, surface server errors back to the user.
+  async function onSubmit(values){
+    await api.createTrade(values);
+    reset();
   }
+
 
   return (
     <section>
       <h2>Add trade</h2>
       <form onSubmit={handleSubmit(onSubmit)} className="trade-form">
-        {/* TODO(TICKET-ADV123): wire up <input {...register('tradeRef')} /> for
-            every field listed in the schema above. Render
-            errors.<field>.message under each input when present. */}
         <label>Trade ref   <input {...register('tradeRef')} placeholder="EQU-20260603-0001" /></label>
         {errors.tradeRef && <p className="form-error">{errors.tradeRef.message}</p>}
+
+        <label>Instrument id   <input type="number" {...register('instrumentId')} /></label>
+        <label>Counterparty id <input type="number" {...register('counterpartyId')} /></label>
+        <label>Asset class    <select {...register('assetClass')}>
+          <option value="EQUITY">EQUITY</option><option value="FX">FX</option>
+          <option value="BOND">BOND</option><option value="DERIVATIVE">DERIVATIVE</option>
+        </select></label>
+        <label>Side <select {...register('side')}>
+          <option value="BUY">BUY</option><option value="SELL">SELL</option>
+        </select></label>
+        <label>Quantity  <input type="number" step="0.0001" {...register('quantity')} /></label>
+        <label>Price     <input type="number" step="0.0001" {...register('price')} /></label>
+        <label>Trade date<input type="date" {...register('tradeDate')} /></label>
 
         <button disabled={isSubmitting} type="submit">Submit</button>
       </form>
     </section>
   );
+ 
 }
 
 export default withAuth(AddTrade);
