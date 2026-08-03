@@ -2,8 +2,12 @@
 <!--
 ============================================================================
 TICKET-ADV098 — CSS Grid page shell (sidebar + header + main + footer)
-TICKET-ADV099 — Semantic HTML5 (header/nav/main/section/article/aside/footer)
-TICKET-ADV100 — ARIA roles + aria-live for the trade feed
+TICKET-ADV099 — CSS custom properties (design tokens)
+TICKET-ADV100 — Dark/light theme toggle
+TICKET-ADV101 — Real-time trade feed area with slide-in animation
+TICKET-ADV102 — CSS animations: fade-in, slide-in, pulse + prefers-reduced-motion
+Semantic HTML5 (header/nav/main/section/article/aside/footer)
+ARIA roles + aria-live for the trade feed
 ============================================================================
 -->
 <html lang="en" data-theme="light">
@@ -11,9 +15,10 @@ TICKET-ADV100 — ARIA roles + aria-live for the trade feed
   <meta charset="utf-8" />
   <title>ReconX (static) — Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css" />
 </head>
-<body>
+<body class="app-shell">
   <header class="layout__header" role="banner">
     <h1 class="layout__title">ReconX</h1>
     <nav class="layout__nav" aria-label="Main navigation">
@@ -22,6 +27,7 @@ TICKET-ADV100 — ARIA roles + aria-live for the trade feed
       <a href="recon.html">Recon</a>
     </nav>
     <button id="theme-toggle" aria-label="Toggle light/dark theme">🌗</button>
+    <span id="sse-status" class="sse-badge sse-badge--connecting">Connecting…</span>
   </header>
 
   <aside class="layout__sidebar" role="complementary">
@@ -46,7 +52,6 @@ TICKET-ADV100 — ARIA roles + aria-live for the trade feed
 
     <section aria-labelledby="feed">
       <h2 id="feed">Live trade feed</h2>
-      <!-- TICKET-ADV100 aria-live so screen readers announce new trades -->
       <div id="trade-feed" role="status" aria-live="polite" aria-atomic="false"></div>
     </section>
   </main>
@@ -55,7 +60,6 @@ TICKET-ADV100 — ARIA roles + aria-live for the trade feed
     <small>ReconX TDI 2026 · static dashboard (Day 7)</small>
   </footer>
 
-  <script src="js/theme.js"></script>
   <script src="js/sse.js"></script>
 </body>
 </html>
