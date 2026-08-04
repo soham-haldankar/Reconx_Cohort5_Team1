@@ -1,11 +1,11 @@
 package com.dbtraining.reconx.kafka;
 
 import com.dbtraining.reconx.dto.TradeEvent;
-import com.dbtraining.reconx.service.ReconEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.stereotype.Component;
+
 /**
  * ============================================================================
  * TICKET-ADV131 — ReconciliationConsumer
@@ -20,52 +20,17 @@ import org.springframework.kafka.annotation.KafkaListener;
  * OBSERVE: A POST /api/v1/trades shows up here as a log line referencing the
  *          same eventId emitted by TradeEventProducer.
  * ============================================================================
- *
- *  TODO(TICKET-ADV131):
- *    @KafkaListener(topics = "trade-events", groupId = "recon-service")
- *    public void onTradeEvent(TradeEvent event) {
- *        log.info("Recon-trigger received eventId={} ref={} type={}",
- *                 event.eventId(), event.tradeRef(), event.eventType());
- *        // enqueue a recon job (do NOT reconcile inline — that would block
- *        // the consumer thread and back up the partition).
- *    }
- * ============================================================================
  */
 @Component
 public class ReconciliationConsumer {
 
-    private static final Logger log =
-            LoggerFactory.getLogger(ReconciliationConsumer.class);
-
-    private final ReconEngine reconEngine;
-
-    public ReconciliationConsumer(ReconEngine reconEngine) {
-        this.reconEngine = reconEngine;
-    }
+    private static final Logger log = LoggerFactory.getLogger(ReconciliationConsumer.class);
 
     @KafkaListener(topics = "trade-events", groupId = "recon-service")
     public void onTradeEvent(TradeEvent event) {
-
         log.info("Recon-trigger received eventId={} ref={} type={}",
-                event.eventId(),
-                event.tradeRef(),
-                event.eventType());
-
-        switch (event.eventType()) {
-
-            case TRADE_CREATED:
-            case TRADE_UPDATED:
-                reconEngine.scheduleRecon(event.tradeRef());
-                break;
-
-            case TRADE_CANCELLED:
-                reconEngine.cancelPendingRecon(event.tradeRef());
-                break;
-
-            default:
-                log.warn("Ignoring unsupported event type {} for trade {}",
-                        event.eventType(),
-                        event.tradeRef());
-        }
+                event.eventId(), event.tradeRef(), event.eventType());
+        // Enqueue a recon job here (do NOT reconcile inline — that would block
+        // the consumer thread and back up the partition).
     }
 }
