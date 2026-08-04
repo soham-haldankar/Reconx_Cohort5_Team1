@@ -57,7 +57,7 @@ function Trades() {
           render={(t) => (
             <>
               <span>{t.tradeRef}</span>
-              <span>{t.symbol ?? t.instrument}</span>
+              <span>{t.symbol ?? t.instrument ?? t.instrumentSymbol}</span>
               <span>{t.qty ?? t.quantity}</span>
               <span>{t.price}</span>
               <span>{t.status}</span>
