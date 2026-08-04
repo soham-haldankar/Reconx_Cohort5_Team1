@@ -1,4 +1,8 @@
-# TICKET-ADV150 — Provider definition: load every dashboard JSON in /dashboards
+# ============================================================================
+# Grafana dashboard provisioning (TICKET-ADV150)
+# Loads all dashboard JSONs from /etc/grafana/provisioning/dashboards
+# ============================================================================
+
 apiVersion: 1
 providers:
   - name: reconx
