@@ -1,10 +1,9 @@
 # ============================================================================
-# TICKET-ADV146 — Spring Boot Dockerfile (multi-stage Maven -> JRE 25 slim)
-#
-# Stage 1: build the JAR with Temurin JDK 25 + Maven.
-# Stage 2: copy ONLY the JAR onto a slim JRE image.
+# Spring Boot multi-stage Dockerfile (Maven/JDK → JRE Alpine)
+# TICKET-ADV146
 # ============================================================================
 
+# Stage 1: Build with Temurin JDK 25 + Maven
 FROM eclipse-temurin:25-jdk AS build
 WORKDIR /workspace
 COPY pom.xml mvnw ./
@@ -14,6 +13,7 @@ COPY src src
 RUN ./mvnw -q -B -DskipTests package && \
     mv target/reconx-*.jar app.jar
 
+# Stage 2: Runtime with Temurin JRE 25 Alpine
 FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S reconx && adduser -S reconx -G reconx
 USER reconx
